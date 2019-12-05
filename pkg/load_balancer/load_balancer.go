@@ -35,5 +35,6 @@ func (lb *RoundRobinLoadBalancer) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 // next sets the load balancer to the next proxy
 func (lb *RoundRobinLoadBalancer) next() {
+	// TODO: use proxy.IsAvailable()
 	lb.current = atomic.AddInt32(&lb.current, 1) % int32(len(lb.proxies))
 }
