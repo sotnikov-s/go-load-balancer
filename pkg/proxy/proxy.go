@@ -12,16 +12,16 @@ import (
 // NewProxy is the Proxy constructor
 func NewProxy(addr *url.URL) *Proxy {
 	return &Proxy{
-		origin:       addr,
-		ReverseProxy: httputil.NewSingleHostReverseProxy(addr),
-		isAvailable:  true,
+		origin:      addr,
+		proxy:       httputil.NewSingleHostReverseProxy(addr),
+		isAvailable: true,
 	}
 }
 
 // Proxy is a simple http proxy entity
 type Proxy struct {
 	origin *url.URL
-	*httputil.ReverseProxy
+	proxy  *httputil.ReverseProxy
 
 	// TODO: move all health related stuff to distinct struct
 	healthMutex   *sync.RWMutex
@@ -65,5 +65,5 @@ func (p *Proxy) runHealthCheck(period time.Duration) {
 
 // ServeHTTP proxies incoming requests
 func (p Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	p.ReverseProxy.ServeHTTP(w, r)
+	p.proxy.ServeHTTP(w, r)
 }
