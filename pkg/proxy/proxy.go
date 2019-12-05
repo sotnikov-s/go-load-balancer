@@ -24,14 +24,14 @@ type Proxy struct {
 	*httputil.ReverseProxy
 
 	// TODO: move all health related stuff to distinct struct
-	// TODO: use sync.RWMutex
-	healthMutex   *sync.Mutex
+	healthMutex   *sync.RWMutex
 	healthChecker func(addr *url.URL) bool
 	isAvailable   bool
 }
 
 func (p *Proxy) WithHealthCheck(checkFunc func(addr *url.URL) bool, period time.Duration) *Proxy {
-	p.healthMutex = &sync.Mutex{}
+	// TODO: fix mutex race
+	p.healthMutex = &sync.RWMutex{}
 	p.healthChecker = checkFunc
 	go p.runHealthCheck(period)
 
@@ -39,8 +39,8 @@ func (p *Proxy) WithHealthCheck(checkFunc func(addr *url.URL) bool, period time.
 }
 
 func (p *Proxy) IsAvailable() bool {
-	p.healthMutex.Lock()
-	defer p.healthMutex.Unlock()
+	p.healthMutex.RLock()
+	defer p.healthMutex.RUnlock()
 	return p.isAvailable
 }
 
