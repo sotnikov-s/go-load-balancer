@@ -29,13 +29,13 @@ type RoundRobinLoadBalancer struct {
 
 // ServeHTTP uses the next proxy to serve the http request
 func (lb *RoundRobinLoadBalancer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	lb.next()
-	lb.proxies[atomic.LoadInt32(&lb.current)].ServeHTTP(w, r)
+	lb.proxies[lb.next()].ServeHTTP(w, r)
 }
 
 // next sets the load balancer to the next proxy
-func (lb *RoundRobinLoadBalancer) next() {
-	next := atomic.AddInt32(&lb.current, 1) % int32(len(lb.proxies))
+func (lb *RoundRobinLoadBalancer) next() int32 {
 	// TODO: use proxy.IsAvailable()
+	next := atomic.AddInt32(&lb.current, 1) % int32(len(lb.proxies))
 	atomic.StoreInt32(&lb.current, next)
+	return next
 }
