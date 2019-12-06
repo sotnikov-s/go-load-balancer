@@ -30,11 +30,12 @@ type RoundRobinLoadBalancer struct {
 // ServeHTTP uses the next proxy to serve the http request
 func (lb *RoundRobinLoadBalancer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	lb.next()
-	lb.proxies[lb.current].ServeHTTP(w, r)
+	lb.proxies[atomic.LoadInt32(&lb.current)].ServeHTTP(w, r)
 }
 
 // next sets the load balancer to the next proxy
 func (lb *RoundRobinLoadBalancer) next() {
+	next := atomic.AddInt32(&lb.current, 1) % int32(len(lb.proxies))
 	// TODO: use proxy.IsAvailable()
-	lb.current = atomic.AddInt32(&lb.current, 1) % int32(len(lb.proxies))
+	atomic.StoreInt32(&lb.current, next)
 }
