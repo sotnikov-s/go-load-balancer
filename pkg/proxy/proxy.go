@@ -26,13 +26,17 @@ type Proxy struct {
 	// TODO: move all health related stuff to distinct struct
 	healthMutex   *sync.RWMutex
 	healthChecker func(addr *url.URL) bool
+	healthCancel  chan struct{}
 	isAvailable   bool
 }
 
 func (p *Proxy) WithHealthCheck(checkFunc func(addr *url.URL) bool, period time.Duration) *Proxy {
-	// TODO: fix mutex race
+	if p.healthChecker != nil {
+		close(p.healthCancel)
+	}
 	p.healthMutex = &sync.RWMutex{}
 	p.healthChecker = checkFunc
+	p.healthCancel = make(chan struct{})
 	go p.runHealthCheck(period)
 
 	return p
@@ -46,17 +50,20 @@ func (p *Proxy) IsAvailable() bool {
 
 func (p *Proxy) runHealthCheck(period time.Duration) {
 	checkHealth := func() {
+		isAvailable := p.healthChecker(p.origin)
 		p.healthMutex.Lock()
 		defer p.healthMutex.Unlock()
-		p.isAvailable = p.healthChecker(p.origin)
+		p.isAvailable = isAvailable
 	}
 
-	// TODO: use cancel channel to stop the goroutine
 	t := time.NewTicker(period)
 	for {
 		select {
 		case <-t.C:
 			checkHealth()
+		case <-p.healthCancel:
+			t.Stop()
+			return
 		default:
 			runtime.Gosched()
 		}
