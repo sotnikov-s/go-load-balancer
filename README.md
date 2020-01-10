@@ -3,6 +3,7 @@
 A load balancer is a device that, behaving as a reverse proxy, uses a number of remote servers to improve computing performance by distributing workloads across the servers.
 
 * [Algorithms](#algorithms)
+* [Schema](#schema)
 * [Example](#example)
 
 ---
@@ -11,9 +12,13 @@ A load balancer is a device that, behaving as a reverse proxy, uses a number of 
 
 The load balancer supports a number of load balancing algorithms:
 - round robin
-- weighted round robin _(to be implemented)_
+- weighted round robin
 - random _(to be implemented)_
 - least connections _(to be implemented)_
+
+## Schema
+
+![schema](https://i.ibb.co/tPJT5WN/Screenshot-2020-01-10-at-14-12-55.png)
 
 ## Example
 
@@ -33,7 +38,7 @@ func main() {
 	}
 	p2 := proxy.NewProxy(longRespUrl)
 
-	lb := loadbalancer.NewRoundRobinLoadBalancer(p1, p2)
+	lb := loadbalancer.NewLoadBalancer(iterator.NewRoundRobin(p1, p2))
 	log.Printf("load balancer started at port :8080")
 	go func() {
 		log.Fatal(http.ListenAndServe(":8080", lb))
