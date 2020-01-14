@@ -24,6 +24,8 @@ The schema is kinda simplified, but the main idea like that:
 
 ## Example
 
+
+### Round Robin
 Here comes a simple round robin load balancer instantiation and usage:
 
 ```golang
@@ -64,4 +66,30 @@ Output:
 2019/12/04 11:59:24 got 2 resp: --- short resp ---
 2019/12/04 11:59:24 got 3 resp: --------- long resp ---------
 2019/12/04 11:59:24 got 4 resp: --- short resp ---
+```
+
+### Weighted Round Robin
+The weighted round robin takes a mapping between proxies and their weights and distributes incoming requests between them depending on the weights.
+
+```golang
+func main() {
+	// ...
+
+	lb := loadbalancer.NewLoadBalancer(iterator.NewWeightedRoundRobin(map[*proxy.Proxy]int32{
+		p1: 3,
+		p2: 1,
+	}))
+	
+	// ...
+}
+```
+
+Output:
+```text
+2020/01/14 11:44:30 load balancer started at port :8080
+2020/01/14 11:44:30 got 0 resp: --- short resp ---
+2020/01/14 11:44:30 got 1 resp: --- short resp ---
+2020/01/14 11:44:30 got 2 resp: --- short resp ---
+2020/01/14 11:44:30 got 3 resp: --------- long resp ---------
+2020/01/14 11:44:30 got 4 resp: --- short resp ---
 ```
