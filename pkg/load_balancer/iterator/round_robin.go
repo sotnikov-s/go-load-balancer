@@ -1,6 +1,7 @@
 package iterator
 
 import (
+	"fmt"
 	"sync/atomic"
 
 	"github.com/sotnikov-s/go-load-balancer/pkg/proxy"
@@ -23,9 +24,21 @@ type RoundRobin struct {
 }
 
 // Next returns the next in the loop proxy
-func (lb *RoundRobin) Next() *proxy.Proxy {
-	// TODO: use proxy.IsAvailable()
-	next := atomic.AddInt32(&lb.current, 1) % int32(len(lb.proxies))
-	atomic.StoreInt32(&lb.current, next)
-	return lb.proxies[next]
+func (r *RoundRobin) Next() (*proxy.Proxy, error) {
+	next := atomic.AddInt32(&r.current, 1) % int32(len(r.proxies))
+	atomic.StoreInt32(&r.current, next)
+	return r.getAvailableProxy(int(next))
+}
+
+// getAvailableProxy walks through the proxies and returns the first available one starting from
+// the one at the marker index. If no available proxy was found, it returns an error
+func (r *RoundRobin) getAvailableProxy(marker int) (*proxy.Proxy, error) {
+	for i := 0; i < len(r.proxies); i++ {
+		tryProxy := (marker + i) % len(r.proxies)
+		p := r.proxies[tryProxy]
+		if p.IsAvailable() {
+			return p, nil
+		}
+	}
+	return nil, fmt.Errorf("all proxies are unavailable")
 }

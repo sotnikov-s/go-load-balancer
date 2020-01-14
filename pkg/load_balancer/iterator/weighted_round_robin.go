@@ -1,6 +1,7 @@
 package iterator
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/sotnikov-s/go-load-balancer/pkg/proxy"
@@ -12,8 +13,8 @@ func NewWeightedRoundRobin(proxies map[*proxy.Proxy]int32) Iterator {
 	weightedProxies := make([]*proxyWithWeight, 0, len(proxies))
 	for p, w := range proxies {
 		weightedProxies = append(weightedProxies, &proxyWithWeight{
-			Proxy: p,
-			w:     w,
+			Proxy:  p,
+			weight: w,
 		})
 	}
 
@@ -33,23 +34,35 @@ type WeightedRoundRobin struct {
 }
 
 // Next returns the next proxy or the current one depending on its usage
-func (lb *WeightedRoundRobin) Next() *proxy.Proxy {
-	lb.mu.Lock()
-	defer lb.mu.Unlock()
+func (w *WeightedRoundRobin) Next() (*proxy.Proxy, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
-	// TODO: use proxy.IsAvailable()
-	currentProxy := lb.proxies[lb.current]
-	if lb.reqCount < currentProxy.w {
-		lb.reqCount++
+	currentProxy := w.proxies[w.current]
+	if w.reqCount < currentProxy.weight {
+		w.reqCount++
 	} else {
-		lb.current = (lb.current + 1) % int32(len(lb.proxies))
-		lb.reqCount = 1
+		w.current = (w.current + 1) % int32(len(w.proxies))
+		w.reqCount = 1
 	}
-	return lb.proxies[lb.current].Proxy
+	return w.getAvailableProxy(int(w.current))
+}
+
+// getAvailableProxy walks through the proxies and returns the first available one starting from
+// the one at the marker index. If no available proxy was found, it returns an error
+func (w *WeightedRoundRobin) getAvailableProxy(marker int) (*proxy.Proxy, error) {
+	for i := 0; i < len(w.proxies); i++ {
+		tryProxy := (marker + i) % len(w.proxies)
+		p := w.proxies[tryProxy]
+		if p.IsAvailable() {
+			return p.Proxy, nil
+		}
+	}
+	return nil, fmt.Errorf("all proxies are unavailable")
 }
 
 // proxyWithWeight is the wrapper over the proxy struct with the proxy instance weight
 type proxyWithWeight struct {
 	*proxy.Proxy
-	w int32
+	weight int32
 }
