@@ -9,23 +9,23 @@ import (
 // NewWeightedRoundRobin accepts a map from a proxy to its weight and returns the iterator which
 // will switch between proxies depending on their weight
 func NewWeightedRoundRobin(proxies map[*proxy.Proxy]int32) Iterator {
-	weightedProxies := make([]*proxyWithWeight, 0, len(proxies))
+	bunch := make(weightedProxiesBunch, 0, len(proxies))
 	for p, w := range proxies {
-		weightedProxies = append(weightedProxies, &proxyWithWeight{
-			Proxy: p,
-			w:     w,
+		bunch = append(bunch, &proxyWithWeight{
+			Proxy:  p,
+			weight: w,
 		})
 	}
 
 	return &WeightedRoundRobin{
-		proxies: weightedProxies,
+		proxies: bunch,
 	}
 }
 
 // WeightedRoundRobin is like the round robin iterator but with possibility to set
 // weights to proxies
 type WeightedRoundRobin struct {
-	proxies []*proxyWithWeight
+	proxies weightedProxiesBunch
 
 	mu       sync.Mutex
 	current  int32
@@ -33,23 +33,16 @@ type WeightedRoundRobin struct {
 }
 
 // Next returns the next proxy or the current one depending on its usage
-func (lb *WeightedRoundRobin) Next() *proxy.Proxy {
-	lb.mu.Lock()
-	defer lb.mu.Unlock()
+func (w *WeightedRoundRobin) Next() (*proxy.Proxy, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
-	// TODO: use proxy.IsAvailable()
-	currentProxy := lb.proxies[lb.current]
-	if lb.reqCount < currentProxy.w {
-		lb.reqCount++
+	currentProxy := w.proxies[w.current]
+	if w.reqCount < currentProxy.weight {
+		w.reqCount++
 	} else {
-		lb.current = (lb.current + 1) % int32(len(lb.proxies))
-		lb.reqCount = 1
+		w.current = (w.current + 1) % int32(len(w.proxies))
+		w.reqCount = 1
 	}
-	return lb.proxies[lb.current].Proxy
-}
-
-// proxyWithWeight is the wrapper over the proxy struct with the proxy instance weight
-type proxyWithWeight struct {
-	*proxy.Proxy
-	w int32
+	return getAvailableProxy(w.proxies, int(w.current))
 }

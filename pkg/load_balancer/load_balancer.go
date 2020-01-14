@@ -18,5 +18,11 @@ type LoadBalancer struct {
 
 // ServeHTTP handles the request by the next proxy gotten from the iterator
 func (l *LoadBalancer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	l.iter.Next().ServeHTTP(w, r)
+	p, err := l.iter.Next()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("The server didn't respond"))
+		return
+	}
+	p.ServeHTTP(w, r)
 }
