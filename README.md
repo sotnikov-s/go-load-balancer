@@ -18,6 +18,8 @@ The load balancer supports a number of load balancing algorithms:
 
 ## Schema
 
+The schema is kinda simplified, but the main idea like that:
+
 ![schema](https://i.ibb.co/tPJT5WN/Screenshot-2020-01-10-at-14-12-55.png)
 
 ## Example
