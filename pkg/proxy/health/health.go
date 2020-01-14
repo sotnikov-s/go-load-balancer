@@ -61,6 +61,7 @@ func (h *ProxyHealth) run() {
 
 	h.cancel = make(chan struct{})
 	go func() {
+		checkHealth()
 		t := time.NewTicker(h.period)
 		for {
 			select {
