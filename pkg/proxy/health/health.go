@@ -13,8 +13,9 @@ func NewProxyHealth(origin *url.URL) *ProxyHealth {
 		origin: origin,
 		check:  defaultHealthCheck,
 		period: defaultHealthCheckPeriod,
+		cancel: make(chan struct{}),
 	}
-	go h.run()
+	h.run()
 
 	return h
 }
@@ -39,7 +40,9 @@ func (h *ProxyHealth) IsAvailable() bool {
 }
 
 // SetHealthCheck sets the passed check func as the algorithm of checking the origin availability and
-// calls for it with interval defined with the passed period variable.
+// calls for it with interval defined with the passed period variable. The SetHealthCheck provides a
+// concurrency save way of setting and replacing the current health check algorithm, so the Stop function
+// shouldn't be called before the SetHealthCheck call.
 func (h *ProxyHealth) SetHealthCheck(check func(addr *url.URL) bool, period time.Duration) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -47,7 +50,16 @@ func (h *ProxyHealth) SetHealthCheck(check func(addr *url.URL) bool, period time
 	h.stop()
 	h.check = check
 	h.period = period
+	h.cancel = make(chan struct{})
+	h.isAvailable = h.check(h.origin)
 	h.run()
+}
+
+// Stop gracefully stops the instance execution. Should be called when the instance work is no more needed.
+func (h *ProxyHealth) Stop() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.stop()
 }
 
 // run runs the check func in a new goroutine.
@@ -59,9 +71,7 @@ func (h *ProxyHealth) run() {
 		h.isAvailable = isAvailable
 	}
 
-	h.cancel = make(chan struct{})
 	go func() {
-		checkHealth()
 		t := time.NewTicker(h.period)
 		for {
 			select {
