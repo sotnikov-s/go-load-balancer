@@ -13,7 +13,7 @@ A load balancer is a device that, behaving as a reverse proxy, uses a number of 
 The load balancer supports a number of load balancing algorithms:
 - round robin
 - weighted round robin
-- random _(to be implemented)_
+- random
 - least connections _(to be implemented)_
 
 ## Schema
@@ -92,4 +92,20 @@ Output:
 2020/01/14 11:44:30 got 2 resp: --- short resp ---
 2020/01/14 11:44:30 got 3 resp: --------- long resp ---------
 2020/01/14 11:44:30 got 4 resp: --- short resp ---
+```
+
+### Random
+The random load balancer, as its name implies, matches clients and servers by random. Its constructor accepts a function called _seed_ to initialize the random number generator state to allow the state customization e.g. for debugging using rand.Seed(1).
+
+```golang
+func main() {
+	// ...
+
+	seed := func() {
+		rand.Seed(time.Now().UTC().UnixNano())
+	}
+	lb := loadbalancer.NewLoadBalancer(iterator.NewRandom(seed, p1, p2))
+
+	// ...
+}
 ```
