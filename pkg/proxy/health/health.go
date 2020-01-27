@@ -10,10 +10,11 @@ import (
 // NewProxyHealth is the ProxyHealth constructor
 func NewProxyHealth(origin *url.URL) *ProxyHealth {
 	h := &ProxyHealth{
-		origin: origin,
-		check:  defaultHealthCheck,
-		period: defaultHealthCheckPeriod,
-		cancel: make(chan struct{}),
+		origin:      origin,
+		check:       defaultHealthCheck,
+		period:      defaultHealthCheckPeriod,
+		cancel:      make(chan struct{}),
+		isAvailable: defaultHealthCheck(origin),
 	}
 	h.run()
 
