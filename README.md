@@ -14,7 +14,7 @@ The load balancer supports a number of load balancing algorithms:
 - round robin
 - weighted round robin
 - random
-- least connections _(to be implemented)_
+- least connections
 
 ## Schema
 
@@ -108,4 +108,15 @@ func main() {
 
 	// ...
 }
+```
+
+### Least Connections
+The least connections load balancer chooses the least loaded available proxy to serve a request.
+
+```golang
+	// ...
+
+	lb := loadbalancer.NewLoadBalancer(iterator.NewLeastConnections(p1, p2))
+
+	// ...
 ```
