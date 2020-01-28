@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"sync/atomic"
 	"time"
 
 	"github.com/sotnikov-s/go-load-balancer/pkg/proxy/health"
@@ -21,10 +22,13 @@ func NewProxy(addr *url.URL) *Proxy {
 type Proxy struct {
 	health *health.ProxyHealth
 	proxy  *httputil.ReverseProxy
+	load   int32
 }
 
 // ServeHTTP proxies incoming requests
-func (p Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	atomic.AddInt32(&p.load, 1)
+	defer atomic.AddInt32(&p.load, -1)
 	p.proxy.ServeHTTP(w, r)
 }
 
@@ -36,4 +40,9 @@ func (p *Proxy) IsAvailable() bool {
 // SetHealthCheck sets the passed check func as the algorithm of checking the origin availability
 func (p *Proxy) SetHealthCheck(check func(addr *url.URL) bool, period time.Duration) {
 	p.health.SetHealthCheck(check, period)
+}
+
+// GetLoad returns the number of requests being served by the proxy at the moment
+func (p *Proxy) GetLoad() int32 {
+	return atomic.LoadInt32(&p.load)
 }
