@@ -3,7 +3,7 @@ package iterator
 import (
 	"sync"
 
-	"github.com/sotnikov-s/go-load-balancer/pkg/proxy"
+	"github.com/sotnikov-s/go-load-balancer/proxy"
 )
 
 // NewWeightedRoundRobin accepts a map from a proxy to its weight and returns the iterator which

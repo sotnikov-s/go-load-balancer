@@ -3,7 +3,7 @@ package iterator
 import (
 	"fmt"
 
-	"github.com/sotnikov-s/go-load-balancer/pkg/proxy"
+	"github.com/sotnikov-s/go-load-balancer/proxy"
 )
 
 type proxiesBunch interface {

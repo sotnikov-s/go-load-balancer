@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/sotnikov-s/go-load-balancer/pkg/proxy"
+	"github.com/sotnikov-s/go-load-balancer/proxy"
 )
 
 // NewRandom accepts a number of proxies to be used in the Random iterator

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/sotnikov-s/go-load-balancer/pkg/proxy"
+	"github.com/sotnikov-s/go-load-balancer/proxy"
 )
 
 // NewLeastConnections accepts a number of proxies to be used in the LeastConnections iterator

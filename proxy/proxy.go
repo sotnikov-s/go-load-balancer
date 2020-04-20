@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sotnikov-s/go-load-balancer/pkg/proxy/health"
+	"github.com/sotnikov-s/go-load-balancer/proxy/health"
 )
 
 // NewProxy is the Proxy constructor

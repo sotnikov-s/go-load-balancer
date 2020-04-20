@@ -3,7 +3,7 @@ package loadbalancer
 import (
 	"net/http"
 
-	"github.com/sotnikov-s/go-load-balancer/pkg/load_balancer/iterator"
+	"github.com/sotnikov-s/go-load-balancer/iterator"
 )
 
 // NewLoadBalancer returns the LoadBalancer instance with the specified iterator
